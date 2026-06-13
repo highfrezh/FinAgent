@@ -1,0 +1,47 @@
+# Web Framework
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+
+# Database
+sqlalchemy==2.0.30
+asyncpg==0.29.0
+alembic==1.13.1
+pgvector==0.2.5
+psycopg2-binary==2.9.9
+
+# Task Queue
+celery==5.4.0
+redis==5.0.4
+
+# LLM & AI
+langchain==0.2.1
+langchain-community==0.2.1
+langgraph==0.1.1
+langchain-ollama==0.1.1
+anthropic==0.28.0
+langchain-groq
+
+# PDF Processing
+pymupdf==1.24.3
+
+# Data Validation
+pydantic>=2.7.4
+pydantic-settings==2.2.1
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Utilities
+python-dotenv==1.0.1
+httpx==0.27.0
+structlog==24.1.0
+
+# Testing
+pytest==8.2.0
+pytest-asyncio==0.23.6
+
+# Dev
+black==24.4.2
+ruff==0.4.4
