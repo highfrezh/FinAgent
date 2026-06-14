@@ -1,6 +1,5 @@
 import fitz
 import re
-from pathlib import Path
 from backend.core.logging import logger
 
 
@@ -12,6 +11,7 @@ def extract_text_from_pdf(file_bytes: bytes, filename: str = "") -> str:
     try:
         doc = fitz.open(stream=file_bytes, filetype="pdf")
         full_text = ""
+        num_pages = doc.page_count  # get page count BEFORE closing
 
         for page_num, page in enumerate(doc):
             page_text = page.get_text()
@@ -23,7 +23,7 @@ def extract_text_from_pdf(file_bytes: bytes, filename: str = "") -> str:
         logger.info(
             "pdf.extracted",
             filename=filename,
-            pages=len(doc),
+            pages=num_pages,
             characters=len(full_text)
         )
 
@@ -37,9 +37,7 @@ def extract_text_from_pdf(file_bytes: bytes, filename: str = "") -> str:
 def extract_text_from_string(text: str) -> str:
     """
     Clean and normalize raw invoice text input.
-    Used when user submits plain text instead of PDF.
     """
-    # Remove excessive whitespace
     text = re.sub(r'\n{3,}', '\n\n', text)
     text = re.sub(r' {2,}', ' ', text)
     return text.strip()
