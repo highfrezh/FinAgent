@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 from backend.core.config import settings
 from backend.core.logging import setup_logging, logger
 from backend.db.database import create_tables
-from backend.api.routes.invoices import router as invoices_router
 
 
 @asynccontextmanager
@@ -36,7 +35,11 @@ app.add_middleware(
 )
 
 # ── Routers ──────────────────────────────────────────────────────────────────
+from backend.api.routes.invoices import router as invoices_router
+from backend.api.routes.vendors import router as vendors_router
+
 app.include_router(invoices_router, prefix="/api/v1/invoices", tags=["Invoices"])
+app.include_router(vendors_router, prefix="/api/v1/vendors", tags=["Vendors"])
 
 
 @app.get("/", tags=["Health"])
