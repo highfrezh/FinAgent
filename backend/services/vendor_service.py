@@ -82,6 +82,6 @@ async def check_duplicate_invoice(
         query = query.where(Invoice.id != exclude_invoice_id)
 
     result = await db.execute(query)
-    existing = result.scalar_one_or_none()
-
+    existing = result.scalars().first()
+    
     return existing is not None

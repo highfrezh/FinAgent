@@ -4,12 +4,11 @@ from sqlalchemy import select, func
 
 from backend.db.database import get_db
 from backend.db.models.invoice import Invoice
-from backend.agents.ingestion_agent import IngestionAgent
+from backend.agents.graph import process_invoice_graph
 from backend.schemas.invoice import InvoiceUploadResponse, InvoiceListResponse
 from backend.core.logging import logger
 
 router = APIRouter()
-ingestion_agent = IngestionAgent()
 
 
 @router.post("/upload", response_model=InvoiceUploadResponse)
@@ -19,7 +18,7 @@ async def upload_invoice(
 ):
     """
     Upload a PDF invoice for processing.
-    The ingestion agent will extract all structured data automatically.
+    Runs the full LangGraph agent pipeline automatically.
     """
     logger.info("api.invoice_upload", filename=file.filename if file else "none")
 
@@ -32,18 +31,30 @@ async def upload_invoice(
             detail="Only PDF files are supported"
         )
 
-    # Read file bytes
     file_bytes = await file.read()
 
     if len(file_bytes) == 0:
         raise HTTPException(status_code=400, detail="File is empty")
 
-    # Run ingestion agent
-    invoice = await ingestion_agent.process(
+    # Run the full agent graph
+    final_state = await process_invoice_graph(
         db=db,
         file_bytes=file_bytes,
         filename=file.filename,
     )
+
+    # Fetch the final invoice from DB
+    invoice_id = final_state.get("invoice_id")
+    if not invoice_id:
+        raise HTTPException(status_code=500, detail="Pipeline failed to create invoice")
+
+    result = await db.execute(
+        select(Invoice).where(Invoice.id == invoice_id)
+    )
+    invoice = result.scalar_one_or_none()
+
+    if not invoice:
+        raise HTTPException(status_code=500, detail="Invoice not found after processing")
 
     return invoice
 
@@ -55,15 +66,26 @@ async def upload_invoice_text(
 ):
     """
     Submit raw invoice text for processing.
-    Useful for testing without a PDF file.
+    Runs the full LangGraph agent pipeline automatically.
     """
     if not raw_text or len(raw_text.strip()) == 0:
         raise HTTPException(status_code=400, detail="No text provided")
 
-    invoice = await ingestion_agent.process(
+    # Run the full agent graph
+    final_state = await process_invoice_graph(
         db=db,
         raw_text=raw_text,
     )
+
+    # Fetch the final invoice from DB
+    invoice_id = final_state.get("invoice_id")
+    if not invoice_id:
+        raise HTTPException(status_code=500, detail="Pipeline failed to create invoice")
+
+    result = await db.execute(
+        select(Invoice).where(Invoice.id == invoice_id)
+    )
+    invoice = result.scalar_one_or_none()
 
     return invoice
 
@@ -77,11 +99,9 @@ async def list_invoices(
     """
     List all invoices with pagination.
     """
-    # Get total count
     count_result = await db.execute(select(func.count(Invoice.id)))
     total = count_result.scalar()
 
-    # Get invoices
     result = await db.execute(
         select(Invoice)
         .order_by(Invoice.created_at.desc())
