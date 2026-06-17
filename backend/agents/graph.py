@@ -1,17 +1,19 @@
+from functools import partial
 from langgraph.graph import StateGraph
 from langgraph.constants import END
 from sqlalchemy.ext.asyncio import AsyncSession
-from functools import partial
 
 from backend.agents.state import InvoiceState
 from backend.agents.ingestion_agent import IngestionAgent
 from backend.agents.validation_agent import ValidationAgent
+from backend.agents.anomaly_agent import AnomalyAgent
 from backend.core.logging import logger
 
 
 # ── Agent instances ───────────────────────────────────────────────────────────
 ingestion_agent = IngestionAgent()
 validation_agent = ValidationAgent()
+anomaly_agent = AnomalyAgent()
 
 
 # ── Node functions ────────────────────────────────────────────────────────────
@@ -90,13 +92,38 @@ async def run_validation(state: InvoiceState, db: AsyncSession) -> InvoiceState:
 
 
 async def run_anomaly(state: InvoiceState, db: AsyncSession) -> InvoiceState:
-    """Node 3 — Anomaly Agent (placeholder for Phase 4)"""
+    """Node 3 — Anomaly Agent (real implementation)"""
     logger.info("graph.node", node="anomaly")
+    try:
+        from backend.db.models.invoice import Invoice
+        from sqlalchemy import select
 
-    state["anomaly_complete"] = True
-    state["is_anomalous"] = False
-    state["current_agent"] = "anomaly"
-    state["reasoning"].append("Anomaly: check complete, no anomalies detected")
+        result = await db.execute(
+            select(Invoice).where(Invoice.id == state["invoice_id"])
+        )
+        invoice = result.scalar_one_or_none()
+
+        if not invoice:
+            raise ValueError(f"Invoice {state['invoice_id']} not found")
+
+        flags = await anomaly_agent.process(db=db, invoice=invoice)
+
+        state["anomaly_flags"] = flags
+        state["is_anomalous"] = len(flags) > 0
+        state["anomaly_complete"] = True
+        state["current_agent"] = "anomaly"
+        state["reasoning"].append(
+            f"Anomaly: score={invoice.anomaly_score:.2f}, "
+            f"flags={flags if flags else 'none'}"
+        )
+
+        if state["is_anomalous"]:
+            state["requires_human_review"] = True
+
+    except Exception as e:
+        state["error"] = str(e)
+        state["anomaly_complete"] = False
+        logger.error("graph.anomaly_failed", error=str(e))
 
     return state
 
@@ -141,7 +168,6 @@ def route_after_anomaly(state: InvoiceState) -> str:
 
 def create_invoice_graph(db: AsyncSession):
     graph = StateGraph(InvoiceState)
-
 
     graph.add_node("ingestion", partial(run_ingestion, db=db))
     graph.add_node("validation", partial(run_validation, db=db))
@@ -196,6 +222,7 @@ async def process_invoice_graph(
         "graph.completed",
         invoice_id=final_state.get("invoice_id"),
         is_valid=final_state.get("is_valid"),
+        is_anomalous=final_state.get("is_anomalous"),
         requires_human_review=final_state.get("requires_human_review"),
         reasoning=final_state.get("reasoning"),
     )
