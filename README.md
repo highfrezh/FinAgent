@@ -68,7 +68,7 @@ FinAgent solves this with autonomous AI agents that process invoices in minutes,
 ### 1. Clone and setup
 
 ```bash
-git clone https://github.com/yourusername/finagent.git
+git clone https://github.com/highfrezh/FinAgent.git
 cd finagent
 cp .env.example .env
 python -m venv venv && source venv/bin/activate
