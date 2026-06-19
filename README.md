@@ -1,8 +1,3 @@
-## Phase 8 — Step 2: Write the README
-
-**Open `README.md` in your root folder and replace the entire content with this:**
-
-```markdown
 # FinAgent 🤖
 
 > Autonomous Finance Operations — Multi-Agent Invoice Processing Platform
