@@ -1,8 +1,3 @@
-## Phase 8 — Step 2: Write the README
-
-**Open `README.md` in your root folder and replace the entire content with this:**
-
-```markdown
 # FinAgent 🤖
 
 > Autonomous Finance Operations — Multi-Agent Invoice Processing Platform
@@ -26,24 +21,7 @@ FinAgent solves this with autonomous AI agents that process invoices in minutes,
 
 ## Architecture
 
-```
-Invoice Input (PDF / Text)
-        ↓
-┌─────────────────────────────────────┐
-│         LangGraph Supervisor        │
-│            (State Graph)            │
-└──┬──────────┬──────────┬────────────┘
-   ↓          ↓          ↓
-Ingestion  Validation  Anomaly    Reporting
- Agent      Agent      Agent       Agent
-   ↓          ↓          ↓
-        PostgreSQL + pgvector
-               ↓
-     Human-in-the-Loop Queue
-     (only for flagged invoices)
-               ↓
-      Streamlit Dashboard
-```
+![FinAgent Architecture](finagent_architecture.png)
 
 ---
 
