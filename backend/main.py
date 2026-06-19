@@ -38,7 +38,9 @@ app.add_middleware(
 from backend.api.routes.invoices import router as invoices_router
 from backend.api.routes.vendors import router as vendors_router
 from backend.api.routes.reports import router as reports_router
+from backend.api.routes.queue import router as queue_router
 
+app.include_router(queue_router, prefix="/api/v1/queue", tags=["Approval Queue"])
 app.include_router(invoices_router, prefix="/api/v1/invoices", tags=["Invoices"])
 app.include_router(vendors_router, prefix="/api/v1/vendors", tags=["Vendors"])
 app.include_router(reports_router, prefix="/api/v1/reports", tags=["Reports"])
