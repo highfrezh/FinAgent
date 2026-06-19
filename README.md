@@ -26,24 +26,7 @@ FinAgent solves this with autonomous AI agents that process invoices in minutes,
 
 ## Architecture
 
-```
-Invoice Input (PDF / Text)
-        ↓
-┌─────────────────────────────────────┐
-│         LangGraph Supervisor        │
-│            (State Graph)            │
-└──┬──────────┬──────────┬────────────┘
-   ↓          ↓          ↓
-Ingestion  Validation  Anomaly    Reporting
- Agent      Agent      Agent       Agent
-   ↓          ↓          ↓
-        PostgreSQL + pgvector
-               ↓
-     Human-in-the-Loop Queue
-     (only for flagged invoices)
-               ↓
-      Streamlit Dashboard
-```
+![FinAgent Architecture](finagent_architecture.png)
 
 ---
 
